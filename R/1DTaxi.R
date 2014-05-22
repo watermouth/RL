@@ -38,7 +38,7 @@ find_optimal_action <- function(ss, AS){
 }
 
 # loop
-N <- 1000
+N <- 10000
 for (i in seq(1,N)){
   # step size
   alpha <- 1 / (1+i)
@@ -51,13 +51,15 @@ for (i in seq(1,N)){
   # next state
   ss <- Transition(ss, a_next)
   if (ss == L){
-    # optimal policy
-    policy_list <- lapply(X=seq(1:L), FUN=function(ss_idx){
-      # extract action which is optimal from post-decision value function
-      found.obj <- find_optimal_action(ss=ss_idx, AS=AS)
-      list(ss=ss_idx, action=found.obj[[2]])
-    })
-    break
+    if (i == N){
+      # optimal policy
+      policy_list <- lapply(X=seq(1:L), FUN=function(ss_idx){
+        # extract action which is optimal from post-decision value function
+        found.obj <- find_optimal_action(ss=ss_idx, AS=AS)
+        list(ss=ss_idx, action=found.obj[[2]])
+      })
+    }
+    ss <- 1
   }
 }
 
