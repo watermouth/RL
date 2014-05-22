@@ -36,10 +36,15 @@ Taxi1D <- function(N=10000,
   # System State
   ss <- 1
   # Post-decision value function table
-  VF.table <- rep(0,L)  
+  VF.table <- rep(0,L)
   # loop
   i <- 1
-  for (n in seq(1,N)){
+  n <- 0
+  while(n < N) {
+    n <- n + 1
+    n.end <- n
+    print(paste("n =", n))
+    VF.table.pre <- VF.table
     while(T){
       # step size
       alpha <- step.size.fun(1+i)
@@ -55,20 +60,25 @@ Taxi1D <- function(N=10000,
         print(ss);print(VF.table)
       }
       if (ss == L){
-        if (n == N)
+        VF.Diff.Squared <- sum((VF.table - VF.table.pre)^2)
+        print(VF.Diff.Squared)
+        if (n == N || VF.Diff.Squared < 1) {
           # optimal policy
           policy_list <- lapply(X=seq(1:L), FUN=function(ss_idx){
             # extract action which is optimal from post-decision value function
             found.obj <- find_optimal_action(ss=ss_idx, AS=AS)
             list(ss=ss_idx, action=found.obj[[2]])
           })
+          n.end <- n
+          n <- N
+        }
         ss <- 1
         break
       }
       i <- i + 1
     }
   }
-  l <- list(iteration=i, VF.table=VF.table, policy=do.call(what=rbind, args=policy_list))
+  l <- list(iteration.i=i, iteration.n=n.end, VF.table=VF.table, policy=do.call(what=rbind, args=policy_list))
   l
 }
 
