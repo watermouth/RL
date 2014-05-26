@@ -30,7 +30,7 @@ Taxi1D <- function(N=10000,
       # step size
       alpha <- step.size.fun(1+i)
       # optimal action
-      found.obj <- find_optimal_action(L=L, ss=ss, AS=AS,Transition=Transition.Fun, Cost=Cost,IMP_COST=IMP_COST)
+      found.obj <- find_optimal_action(L=L, ss=ss, AS=AS,Transition=Transition.Fun, Cost=Cost,IMP_COST=IMP_COST, VF.table=VF.table)
       cost_plus_vfs <- found.obj[[1]]
       a_next <- found.obj[[2]] 
       # update value function
@@ -38,7 +38,10 @@ Taxi1D <- function(N=10000,
       # next state
       ss <- Transition.Fun(ss, a_next)
       if (print.state){
-        print(ss);print(VF.table)
+        print("VF.table, cost_plu_vfs, next_state")
+        print(VF.table)
+        print(cost_plus_vfs)
+        print(ss)
       }
       if (ss == L){
         VF.Diff.Squared <- sum((VF.table - VF.table.pre)^2)
@@ -47,7 +50,7 @@ Taxi1D <- function(N=10000,
           # optimal policy
           policy_list <- lapply(X=seq(1:L), FUN=function(ss_idx){
             # extract action which is optimal from post-decision value function
-            found.obj <- find_optimal_action(L=L, ss=ss_idx, AS=AS,Transition=Transition.Fun,Cost=Cost, IMP_COST=IMP_COST)
+            found.obj <- find_optimal_action(L=L, ss=ss_idx, AS=AS,Transition=Transition.Fun,Cost=Cost, IMP_COST=IMP_COST, VF.table=VF.table)
             list(ss=ss_idx, action=found.obj[[2]])
           })
           n.end <- n
@@ -65,15 +68,16 @@ Taxi1D <- function(N=10000,
 
 #' \code{find_optimal_action}
 #' Cost function argumetns are ss and a.
-find_optimal_action <- function(L, ss, AS, Transition, Cost, IMP_COST){
+find_optimal_action <- function(L, ss, AS, Transition, Cost, IMP_COST, VF.table){
   cost_plus_vfs <- sapply(X=AS,FUN=function(a){
     ss_next <- Transition(ss=ss,a=a)
-    if ((ss_next < 1 && a <= 0 ) || (ss_next > L && a > 0)){
+    if ((ss_next < 1 && a < 0 ) || (ss_next > L && a > 0)){
       return(IMP_COST)
     }
     Cost(ss, a, ss_next) + VF.table[ss_next] # post-decision value function
   })
   a_next <- AS[which.min(cost_plus_vfs)]
+#   print(VF.table)
   return(list(cost_plus_vfs, a_next))
 }
 
