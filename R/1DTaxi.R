@@ -6,29 +6,9 @@
 #' @param Transition Transition function
 #' @param IMP_COST big enough for impossible action cost
 Taxi1D <- function(N=10000,
-                   L=11, AS=c(-1,0,1),Cost=function(ss,action){1},
-                   Transition=function(ss,a){
-                     sss <- ss + a
-                     if (sss < 1){
-                       return(1)
-                     }
-                     if (sss > L ){
-                       return(L)
-                     }
-                     sss
-                   },
+                   L=11, AS=c(-1,0,1),Cost=Taxi1DCost,
+                   Transition=Taxi1DTransitionBase,
                    IMP_COST=10000,
-                   find_optimal_action = function(ss, AS){
-                     cost_plus_vfs <- sapply(X=AS,FUN=function(a){
-                       ss_next <- ss + a
-                       if (ss_next < 1 || ss_next > L){
-                         return(IMP_COST)
-                       }
-                       Cost(ss, a) + VF.table[ss_next] # post-decision value function
-                     })
-                     a_next <- AS[which.min(cost_plus_vfs)]
-                     return(list(cost_plus_vfs, a_next))
-                   },
                    step.size.fun=function(x){1/x},
                    print.state=F)
 {
@@ -37,6 +17,7 @@ Taxi1D <- function(N=10000,
   ss <- 1
   # Post-decision value function table
   VF.table <- rep(0,L)
+  Transition.Fun <- function(ss,a){Transition(ss=ss,a=a,L=L)}
   # loop
   i <- 1
   n <- 0
@@ -49,13 +30,13 @@ Taxi1D <- function(N=10000,
       # step size
       alpha <- step.size.fun(1+i)
       # optimal action
-      found.obj <- find_optimal_action(ss=ss, AS=AS)
+      found.obj <- find_optimal_action(L=L, ss=ss, AS=AS,Transition=Transition.Fun, Cost=Cost,IMP_COST=IMP_COST)
       cost_plus_vfs <- found.obj[[1]]
       a_next <- found.obj[[2]] 
       # update value function
       VF.table[ss] <- (1-alpha)*VF.table[ss] + alpha * cost_plus_vfs[which(a_next == AS)]
       # next state
-      ss <- Transition(ss, a_next)
+      ss <- Transition.Fun(ss, a_next)
       if (print.state){
         print(ss);print(VF.table)
       }
@@ -66,7 +47,7 @@ Taxi1D <- function(N=10000,
           # optimal policy
           policy_list <- lapply(X=seq(1:L), FUN=function(ss_idx){
             # extract action which is optimal from post-decision value function
-            found.obj <- find_optimal_action(ss=ss_idx, AS=AS)
+            found.obj <- find_optimal_action(L=L, ss=ss_idx, AS=AS,Transition=Transition.Fun,Cost=Cost, IMP_COST=IMP_COST)
             list(ss=ss_idx, action=found.obj[[2]])
           })
           n.end <- n
@@ -82,29 +63,63 @@ Taxi1D <- function(N=10000,
   l
 }
 
-Taxi1DCost2 <- function(ss,a){
+#' \code{find_optimal_action}
+#' Cost function argumetns are ss and a.
+find_optimal_action <- function(L, ss, AS, Transition, Cost, IMP_COST){
+  cost_plus_vfs <- sapply(X=AS,FUN=function(a){
+    ss_next <- Transition(ss=ss,a=a)
+    if ((ss_next < 1 && a <= 0 ) || (ss_next > L && a > 0)){
+      return(IMP_COST)
+    }
+    Cost(ss, a, ss_next) + VF.table[ss_next] # post-decision value function
+  })
+  a_next <- AS[which.min(cost_plus_vfs)]
+  return(list(cost_plus_vfs, a_next))
+}
+
+#' Cost function's API
+Taxi1DCost <- function(ss,action,ss_next=NULL){1}
+
+Taxi1DCost2 <- function(ss,a,ss_next=NULL){
   a^2 + 1
 }
 
-Taxi1DCost2Revised <- function(ss,a,obstacles=c(1,5),IMP_COST=10000){
+Taxi1DCost2Revised <- function(ss,a,ss_next=NULL,obstacles=c(1,5),IMP_COST=10000){
   if (any(ss+a == obstacles)){
     return(IMP_COST)
   }
   a^2 + 1
 }
 
-Taxi1DTransition <- function(ss,a, obstacles=c(1,5)){
+#' Transition function's API
+Taxi1DTransitionBase <- function(ss,a,L){
   sss <- ss + a
-  if (a > 0 && any(sss == obstacles)) {
-    return(Taxi1DTransition(ss, a-1))
+  if (sss < 1){
+    return(1)
   }
-  if (a < 0 && any(sss == obstacles)) {
-    return(Taxi1DTransition(ss, a+1))
+  if (sss > L ){
+    return(L)
   }
   sss
 }
 
-Taxi1DCost3 <- function(ss,a){
-  a^2 - ss + 100
+Taxi1DTransition <- function(ss,a,L,obstacles=c(1,5)){
+  sss <- ss + a
+  if (a > 0 && any(sss == obstacles)) {
+    return(Taxi1DTransition(ss, a-1, obstacles=obstacles))
+  }
+  if (a < 0 && any(sss == obstacles)) {
+    return(Taxi1DTransition(ss, a+1, obstacles=obstacles))
+  }
+  sss
+}
+
+#' 
+#' a > 0 => wind brows against
+Taxi1DTransition2 <- function(ss, a, L, prob=0.9){
+  W <- rbinom(1,1,prob)
+  adjusted <- a + (if (a > 0) -W else W)
+  out <- Taxi1DTransitionBase(ss, adjusted, L)
+  out
 }
 
