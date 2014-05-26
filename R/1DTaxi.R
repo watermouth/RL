@@ -10,6 +10,7 @@ Taxi1D <- function(N=10000,
                    Transition=Taxi1DTransitionBase,
                    IMP_COST=10000,
                    step.size.fun=function(x){1/x},
+                   solution.epsilon=0.01,
                    print.state=F)
 {
   # Initialization
@@ -24,7 +25,7 @@ Taxi1D <- function(N=10000,
   while(n < N) {
     n <- n + 1
     n.end <- n
-    print(paste("n =", n))
+#     print(paste("n =", n))
     VF.table.pre <- VF.table
     while(T){
       # step size
@@ -45,8 +46,8 @@ Taxi1D <- function(N=10000,
       }
       if (ss == L){
         VF.Diff.Squared <- sum((VF.table - VF.table.pre)^2)
-        print(VF.Diff.Squared)
-        if (n == N || VF.Diff.Squared < 1) {
+#         print(VF.Diff.Squared)
+        if (n == N || VF.Diff.Squared < solution.epsilon) {
           # optimal policy
           policy_list <- lapply(X=seq(1:L), FUN=function(ss_idx){
             # extract action which is optimal from post-decision value function
@@ -62,7 +63,7 @@ Taxi1D <- function(N=10000,
       i <- i + 1
     }
   }
-  l <- list(iteration.i=i, iteration.n=n.end, VF.table=VF.table, policy=do.call(what=rbind, args=policy_list))
+  l <- list(iteration.i=i, iteration.n=n.end, VF.table=VF.table, policy=do.call(what=rbind, args=policy_list), VF.Diff.Squared=VF.Diff.Squared)
   l
 }
 
@@ -94,6 +95,11 @@ Taxi1DCost2Revised <- function(ss,a,ss_next=NULL,obstacles=c(1,5),IMP_COST=10000
   }
   a^2 + 1
 }
+
+Taxi1DCost3 <- function(ss,a,ss_next=NULL){
+  a^2 - (ss_next - ss) + 1
+}
+
 
 #' Transition function's API
 Taxi1DTransitionBase <- function(ss,a,L){
