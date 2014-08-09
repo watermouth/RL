@@ -1,6 +1,4 @@
-Average_Rewards_for_Epsilon_Greedy <- function(trial_num=100){
-  mu_vec <- 1:10
-  sd_vec <- rep(2,10)
+Average_Rewards_for_Epsilon_Greedy <- function(trial_num=100, mu_vec=1:10, sd_vec=rep(2,10)){
   epsilons <- c(0.01, 0.1, 0.2)
   cols <- c("red", "blue", "green")
   results <- scenario_simulation_1(
@@ -17,4 +15,9 @@ Average_Rewards_for_Epsilon_Greedy <- function(trial_num=100){
     barplot(height = nums_selected[,i])
   })
   NULL
+}
+
+Various_Bandit_Simulations <- function(){
+  print("bigger variance makes it difficult to bandit better")
+  Average_Rewards_for_Epsilon_Greedy(trial_num = 1000, mu_vec = 1:10, sd_vec = 1:10)
 }
