@@ -44,6 +44,18 @@ epsilon_greedy_policy <- function(slots, epsilon=0.1){
   }
 }
 
+ucb1_policy <- function(slots, coeff=2){
+  selected_nums <- sapply(X = slots, FUN = function(slot){
+    slot$e_num
+  })
+  sum_of_selected_nums <- sum(selected_nums)
+  e_reward_means <- sapply(X = slots, FUN = function(slot){
+    slot$e_reward_mean
+  })
+  values <- e_reward_means + sqrt(coeff * log(sum_of_selected_nums) / selected_nums)  
+  which.max(values)
+}
+
 bandit_simulation <- function(trial_num=100, slots, action.fun=action, policy = epsilon_greedy_policy){
   num_slot <- length(slots)
   rewards <- vector(mode = "numeric", length = trial_num)
