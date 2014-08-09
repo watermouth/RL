@@ -80,6 +80,18 @@ scenario_simulation_1 <- function(
   results
 }
 
+scenario_simulation <- function(
+  trial_num=100, mu_vec=1:10, sd_vec=rep(10,10), policies
+){
+  # slots
+  slots <- get_initialized_slots(mu = mu_vec, sd=sd_vec)
+  # simulation
+  results <- lapply(X = policies, FUN = function(policy){
+    bandit_simulation(trial_num = trial_num, slots = slots, policy = policy)
+  })
+  results
+}
+
 extract_column <- function(results, column = average_rewards){
   values <- sapply(X = results, FUN = function(i){i[[column]]})
 }
