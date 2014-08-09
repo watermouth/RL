@@ -5,14 +5,15 @@
 
 using namespace Rcpp;
 
-// rcpp_hello_world
-List rcpp_hello_world();
-RcppExport SEXP MyRL_rcpp_hello_world() {
+// timesTwo
+int timesTwo(int x);
+RcppExport SEXP MyRL_timesTwo(SEXP xSEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
     {
         Rcpp::RNGScope __rngScope;
-        List __result = rcpp_hello_world();
+        Rcpp::traits::input_parameter< int >::type x(xSEXP );
+        int __result = timesTwo(x);
         PROTECT(__sexp_result = Rcpp::wrap(__result));
     }
     UNPROTECT(1);
